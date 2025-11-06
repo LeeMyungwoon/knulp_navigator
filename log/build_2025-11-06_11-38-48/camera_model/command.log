@@ -1,0 +1,4 @@
+Invoking command in '/home/knulp/dev_ws/knulp_navigator/build/camera_model': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/knulp/dev_ws/knulp_navigator/build/camera_model -- -j12 -l12
+Invoked command in '/home/knulp/dev_ws/knulp_navigator/build/camera_model' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/knulp/dev_ws/knulp_navigator/build/camera_model -- -j12 -l12
+Invoking command in '/home/knulp/dev_ws/knulp_navigator/build/camera_model': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/knulp/dev_ws/knulp_navigator/build/camera_model
+Invoked command in '/home/knulp/dev_ws/knulp_navigator/build/camera_model' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/knulp/dev_ws/knulp_navigator/build/camera_model
