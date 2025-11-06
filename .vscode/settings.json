@@ -1,6 +1,6 @@
 {
     "files.associations": {
-        "chrono": "cpp",
+        "tuple": "cpp",
         "cctype": "cpp",
         "clocale": "cpp",
         "cmath": "cpp",
@@ -18,6 +18,7 @@
         "strstream": "cpp",
         "bit": "cpp",
         "bitset": "cpp",
+        "chrono": "cpp",
         "compare": "cpp",
         "complex": "cpp",
         "concepts": "cpp",
@@ -44,7 +45,6 @@
         "ratio": "cpp",
         "string_view": "cpp",
         "system_error": "cpp",
-        "tuple": "cpp",
         "type_traits": "cpp",
         "utility": "cpp",
         "fstream": "cpp",
@@ -68,6 +68,12 @@
         "cinttypes": "cpp",
         "typeindex": "cpp",
         "typeinfo": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "core": "cpp",
+        "specialfunctions": "cpp",
+        "any": "cpp",
+        "codecvt": "cpp",
+        "future": "cpp",
+        "valarray": "cpp"
     }
 }

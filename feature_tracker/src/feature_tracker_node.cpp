@@ -13,7 +13,7 @@
 
 std::vector<uchar> r_status;
 std::vector<float> r_err;
-std::queue<sensor_msgs::msg::Image::ConstPtr> img_buf;
+std::queue<sensor_msgs::msg::Image::ConstSharedPtr> img_buf;
 
 rclcpp::Publisher<sensor_msgs::msg::PointCloud>::SharedPtr pub_img;
 rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_match;
@@ -27,7 +27,7 @@ double last_image_time = 0;
 bool init_pub = 0;
 
 // 이미지 콜백함수
-void img_callback(const sensor_msgs::msg::Image::SharedPtr img_msg) {
+void img_callback(const sensor_msgs::msg::Image::ConstSharedPtr img_msg) {
     if(first_image_flag) {
         first_image_flag = false;
         first_image_time = img_msg->header.stamp.sec+img_msg->header.stamp.nanosec*(1e-9);
