@@ -1,0 +1,54 @@
+[0.007s] Invoking command in '/home/knulp/dev_ws/knulp_navigator/build/camera_model': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/knulp/dev_ws/knulp_navigator/build/camera_model -- -j12 -l12
+[0.060s] [ 48%] Built target camera_model
+[0.061s] [100%] Built target Calibration
+[0.071s] Invoked command in '/home/knulp/dev_ws/knulp_navigator/build/camera_model' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/knulp/dev_ws/knulp_navigator/build/camera_model -- -j12 -l12
+[0.080s] Invoking command in '/home/knulp/dev_ws/knulp_navigator/build/camera_model': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/knulp/dev_ws/knulp_navigator/build/camera_model
+[0.085s] -- Install configuration: ""
+[0.085s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/environment/library_path.sh
+[0.085s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/environment/library_path.dsv
+[0.085s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/lib/camera_model/Calibration
+[0.085s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/bin/Calibration
+[0.085s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/lib/libcamera_model.a
+[0.085s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/lib/camera_model/Calibration
+[0.085s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include/
+[0.085s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal
+[0.086s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/camera_models
+[0.086s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/camera_models/EquidistantCamera.h
+[0.086s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/camera_models/PinholeCamera.h
+[0.086s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/camera_models/Camera.h
+[0.086s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/camera_models/CameraFactory.h
+[0.086s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/camera_models/CataCamera.h
+[0.086s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/camera_models/ScaramuzzaCamera.h
+[0.086s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/camera_models/CostFunctionFactory.h
+[0.086s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/calib
+[0.086s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/calib/CameraCalibration.h
+[0.086s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/gpl
+[0.086s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/gpl/gpl.h
+[0.086s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/gpl/EigenUtils.h
+[0.086s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/gpl/EigenQuaternionParameterization.h
+[0.086s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/chessboard
+[0.086s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/chessboard/ChessboardQuad.h
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/chessboard/Chessboard.h
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/chessboard/ChessboardCorner.h
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/chessboard/Spline.h
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/sparse_graph
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/include//camodocal/sparse_graph/Transform.h
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/ament_index/resource_index/package_run_dependencies/camera_model
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/ament_index/resource_index/parent_prefix_path/camera_model
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/environment/ament_prefix_path.sh
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/environment/ament_prefix_path.dsv
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/environment/path.sh
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/environment/path.dsv
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/local_setup.bash
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/local_setup.sh
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/local_setup.zsh
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/local_setup.dsv
+[0.087s] -- Installing: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/package.dsv
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/ament_index/resource_index/packages/camera_model
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/cmake/ament_cmake_export_include_directories-extras.cmake
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/cmake/ament_cmake_export_libraries-extras.cmake
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/cmake/ament_cmake_export_dependencies-extras.cmake
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/cmake/camera_modelConfig.cmake
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/cmake/camera_modelConfig-version.cmake
+[0.087s] -- Up-to-date: /home/knulp/dev_ws/knulp_navigator/install/camera_model/share/camera_model/package.xml
+[0.088s] Invoked command in '/home/knulp/dev_ws/knulp_navigator/build/camera_model' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/knulp/dev_ws/knulp_navigator/build/camera_model

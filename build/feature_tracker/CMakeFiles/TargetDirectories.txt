@@ -1,0 +1,10 @@
+/home/knulp/dev_ws/knulp_navigator/build/feature_tracker/CMakeFiles/uninstall.dir
+/home/knulp/dev_ws/knulp_navigator/build/feature_tracker/CMakeFiles/feature_tracker_uninstall.dir
+/home/knulp/dev_ws/knulp_navigator/build/feature_tracker/CMakeFiles/feature_tracker.dir
+/home/knulp/dev_ws/knulp_navigator/build/feature_tracker/CMakeFiles/test.dir
+/home/knulp/dev_ws/knulp_navigator/build/feature_tracker/CMakeFiles/edit_cache.dir
+/home/knulp/dev_ws/knulp_navigator/build/feature_tracker/CMakeFiles/rebuild_cache.dir
+/home/knulp/dev_ws/knulp_navigator/build/feature_tracker/CMakeFiles/list_install_components.dir
+/home/knulp/dev_ws/knulp_navigator/build/feature_tracker/CMakeFiles/install.dir
+/home/knulp/dev_ws/knulp_navigator/build/feature_tracker/CMakeFiles/install/local.dir
+/home/knulp/dev_ws/knulp_navigator/build/feature_tracker/CMakeFiles/install/strip.dir
