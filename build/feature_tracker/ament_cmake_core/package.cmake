@@ -1,6 +1,6 @@
 set(_AMENT_PACKAGE_NAME "feature_tracker")
 set(feature_tracker_VERSION "0.0.0")
-set(feature_tracker_MAINTAINER "knulp <knulp@todo.todo>")
+set(feature_tracker_MAINTAINER "knulp <knulpmyung@gmail.com>")
 set(feature_tracker_BUILD_DEPENDS "rclcpp" "rcpputils" "std_msgs" "sensor_msgs" "geometry_msgs" "cv_bridge" "camera_model" "image_transport")
 set(feature_tracker_BUILDTOOL_DEPENDS "ament_cmake")
 set(feature_tracker_BUILD_EXPORT_DEPENDS "rclcpp" "rcpputils" "std_msgs" "sensor_msgs" "geometry_msgs" "cv_bridge" "camera_model" "image_transport")
