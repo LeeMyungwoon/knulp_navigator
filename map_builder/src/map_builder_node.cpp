@@ -8,7 +8,7 @@
 
 class GlobalMapBuilder : public rclcpp::Node {
 public:
-    GlobalMapBuilder() : Node("global_map_builder"), resolution_(0.1), map_size_x_(1000), map_size_y_(1000) {
+    GlobalMapBuilder() : Node("map_builder"), resolution_(0.1), map_size_x_(1000), map_size_y_(1000) {
         // Grid 초기화
         grid_.header.frame_id = "world";
         grid_.info.resolution = resolution_;
@@ -23,7 +23,7 @@ public:
         map_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>("/map", 10);
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(this);
 
-        // Subscriber
+        // Subscription
         point_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud>(
             "/vins_estimator/keyframe_point", 10, [this](const sensor_msgs::msg::PointCloud::SharedPtr msg) {
                 // updateMap(msg);
@@ -59,7 +59,6 @@ private:
     }
 
     void pointCallBack(sensor_msgs::msg::PointCloud::SharedPtr msg) {
-
         if (msg->header.frame_id != "world") {
             RCLCPP_WARN(this->get_logger(),
                 "Expected frame_id 'world' but got '%s'. Skip.", msg->header.frame_id.c_str());
@@ -138,12 +137,32 @@ private:
     void publishMap() {
         grid_.header.stamp = this->now();
         map_pub_->publish(grid_);
+
+        // nav_msgs::msg::OccupancyGrid grid__;
+        // grid__.header.stamp = this->now();
+        // grid__.header.frame_id = "world";
+        // grid__.info.resolution = 0.1;
+        // grid__.info.width = 1000;
+        // grid__.info.height = 1000;
+        // grid__.info.origin.position.x = -map_size_x_ * resolution_ / 2;
+        // grid__.info.origin.position.y = -map_size_y_ * resolution_ / 2;
+        // grid__.info.origin.position.z = 0.0;
+        // grid__.data.assign(map_size_x_ * map_size_y_, 0);  
+        // for (size_t i = 100000; i <= 100550; i++) {
+        //     grid__.data[i] = 100;
+        // }
+    
+        // map_pub_->publish(grid__);
     }
 
+    // Publisher
+    rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr map_pub_;
+
+    // Subscription
     rclcpp::Subscription<sensor_msgs::msg::PointCloud>::SharedPtr point_sub_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr frame_pose_sub_;
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
-    rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr map_pub_;
+
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
     rclcpp::TimerBase::SharedPtr timer_;
