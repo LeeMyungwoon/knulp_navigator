@@ -87,6 +87,7 @@
         "scoped_allocator": "cpp",
         "shared_mutex": "cpp",
         "span": "cpp",
-        "syncstream": "cpp"
+        "syncstream": "cpp",
+        "cassert": "cpp"
     }
 }
