@@ -38,6 +38,13 @@ public:
         prob_.model.mode = local_planner::ModelMode::Kinematic;
         prob_.model.geom = geom_;
 
+        // γ 설정
+        prob_.safety.use_safety_gamma = true;
+        prob_.safety.gamma_min = 0.0;
+        prob_.safety.gamma_max = 1.0;
+        prob_.safety.gamma = 0.8;                   // 적당히 여유
+        prob_.safety.corridor_tighten_margin = 0.3; // [m] 
+
         // 코스트맵 튜닝 파라미터
         costmap_params_.scan_max = 4.0;
         costmap_params_.scan_step = 0.05;
@@ -184,6 +191,9 @@ private:
         if (!buildProblemFromCurrentState(path, x, y, yaw, vx, wz, prob_local, x_ref, y_ref, x_curr)) {
             return;
         }
+
+        /* TODO */ 
+        // γ 업데이트 코드 추후 작성
 
         // MPC 풀이
         local_planner::MPCResult res = local_planner::solve_local_mpc(prob_local, x_curr, &last_u_seq_, solver_opt_);

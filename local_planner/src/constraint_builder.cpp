@@ -193,7 +193,19 @@ BuiltQP buildConstraints(const MpcProblem &prob, const Eigen::VectorXd &x0, cons
     // [코리도 제약]
     // 부등식 제약
     const double L_full = prob.model.geom.front_overhang + prob.model.geom.wheelbase + prob.model.geom.rear_overhang;
-    const double halfL  = 0.5 * L_full;
+    const double halfL = 0.5 * L_full;
+    // γ 세이프티 파라미터  
+    const bool use_safety_gamma = prob.safety.use_safety_gamma;
+
+    double gamma = 1.0;
+    double tighten = 0.0;
+
+    if (use_safety_gamma) {
+        // 0 ~ 1 범위 클램프
+        gamma = std::clamp(prob.safety.gamma, prob.safety.gamma_min, prob.safety.gamma_max);
+        tighten = (1.0 - gamma) * prob.safety.corridor_tighten_margin;
+    }
+
     auto push_corridor = [&](std::size_t k, double ey_min, double ey_max, double sign /* -1 rear, 0 mid, +1 front */) {
         // e_term = ey + sign*(L/2)*eψ   (rear는 sign=-1, mid 0, front +1)
         // 상한:  e_term <= ey_max (+ ε_obs)
@@ -228,12 +240,39 @@ BuiltQP buildConstraints(const MpcProblem &prob, const Eigen::VectorXd &x0, cons
         throw std::runtime_error("corridor.bounds size must be N.");
 
     // 모든 시점 k에 대해, 뒤/중간/앞 3지점 제약 추가
-    for (std::size_t k = 0; k < N; k++) {
+    for (std::size_t k = 0; k < N; k++) {        
         const auto& b = prob.corridor.bounds[k];
+
+        double ey_min_R = b.ey_min_R;
+        double ey_max_R = b.ey_max_R;
+        double ey_min_M = b.ey_min_M;
+        double ey_max_M = b.ey_max_M;
+        double ey_min_F = b.ey_min_F;
+        double ey_max_F = b.ey_max_F;
+
+        if (use_safety_gamma && tighten > 0.0) {
+            ey_min_R += tighten;
+            ey_max_R -= tighten;
+            ey_min_M += tighten;
+            ey_max_M -= tighten;
+            ey_min_F += tighten;
+            ey_max_F -= tighten;
+        
+            // min > max 될 경우 맞춤
+            auto fix_bounds = [](double &mn, double &mx) {
+                if (mn > mx) {
+                    const double mid = 0.5 * (mn + mx);
+                    mn = mx = mid; // 한 점으로 수축
+                }
+            };
+            fix_bounds(ey_min_R, ey_max_R);
+            fix_bounds(ey_min_M, ey_max_M);
+            fix_bounds(ey_min_F, ey_max_F);   
+        }
         // Rear (sign=-1), Mid (0), Front(+1)
-        push_corridor(k, b.ey_min_R, b.ey_max_R, -1.0); // 마지막 파라메미터 => 위치 플래그 (뒤, 중앙, 앞)
-        push_corridor(k, b.ey_min_M, b.ey_max_M,  0.0);
-        push_corridor(k, b.ey_min_F, b.ey_max_F, +1.0);
+        push_corridor(k, ey_min_R, ey_max_R, -1.0); 
+        push_corridor(k, ey_min_M, ey_max_M,  0.0);
+        push_corridor(k, ey_min_F, ey_max_F, +1.0);
     }
 
     // [마찰제약]

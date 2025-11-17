@@ -158,17 +158,17 @@ struct SolverOptions {
 // 하드 제약조건
 struct HardLimits {
     // 입력 자체
-    double ax_min    = -4.0, ax_max    = 2.0;   // [m/s^2]
+    double ax_min = -4.0, ax_max = 2.0;         // [m/s^2]
     double delta_min = -0.5, delta_max = 0.5;   // [rad]
 
     // 입력 변화율 (rate)
-    double dax_min   = -2.5, dax_max   = 2.5;   // [m/s^3] (Δax / dt 관점이면 수치 조정)
-    double ddelta_min= -0.3, ddelta_max= 0.3;   // [rad/s]  (Δdelta / dt)
+    double dax_min = -2.5, dax_max = 2.5;       // [m/s^3] (Δax / dt 관점이면 수치 조정)
+    double ddelta_min = -0.3, ddelta_max = 0.3; // [rad/s]  (Δdelta / dt)
 
     // 상태 제한(선택)
-    double vx_min    = 0.0,  vx_max    = 8.0;   // [m/s]
-    double wz_min    = -2.0, wz_max    = 2.0;   // [rad/s]
-    double ey_abs_max= 5.0;                     // [m] 절대 횡오차 상한(긴급 시)
+    double vx_min = 0.0, vx_max = 8.0;  // [m/s]
+    double wz_min = -2.0, wz_max = 2.0; // [rad/s]
+    double ey_abs_max = 5.0;            // [m] 절대 횡오차 상한(긴급 시)
 };
 
 // 마찰타이어 제약
@@ -179,9 +179,19 @@ struct PolytopeSequence {
 
 // 안전 변수
 struct SafetyParams {
-    bool use_safety_gamma = false; // true면 corridor를 γ로 타이팅/릴랙싱
-    double gamma_min = 0.0, gamma_max = 1.0;
+    bool use_safety_gamma = false;  // true면 corridor를 γ로 타이팅/릴랙싱
+    
+    // 현재 사용중인 감마 값
+    double gamma = 1.0;             // 0에 가까울수록 보수적
+    
+    // 허용범위
+    double gamma_min = 0.0;
+    double gamma_max = 1.0;
+
+    //  γ = 0 일 때 최대 줄일 값
+    double corridor_tighten_margin = 0.3;   // [m]
 };
+
 
 // 슬랙 변수
 struct SlackPolicy {
@@ -226,11 +236,9 @@ struct MPCResult {
     std::vector<Control> u_pred;  // size N
 };
 
-/*******************************/
-/*     이건 안써도 될것 같은데?     */
-/*******************************/
+/* 지금 안쓰고 있다 */
 
-// Circle 형태 장애물 (MPC 제약식용)
+// Circle 형태 개별 장애물 제약용
 struct CircleObstacle {
     double cx = 0.0;   // 중심 x [m]
     double cy = 0.0;   // 중심 y [m]
