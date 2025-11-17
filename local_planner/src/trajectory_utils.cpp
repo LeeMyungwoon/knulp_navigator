@@ -77,7 +77,7 @@ std::vector<double> computeCurvature(const std::vector<PathSample> &path) {
     return kappa;
 }
 
-static InterpOut interpolateYawKappaByS(const std::vector<PathSample> &path, const std::vector<double> &kappa, double s_query) {
+InterpOut interpolateYawKappaByS(const std::vector<PathSample> &path, const std::vector<double> &kappa, double s_query) {
     InterpOut out;
     if (path.empty()) 
         return out;

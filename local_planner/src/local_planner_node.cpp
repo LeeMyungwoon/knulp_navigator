@@ -20,21 +20,7 @@
 #include "local_planner/trajectory_utils.hpp"
 #include "local_planner/local_mpc.hpp"
 #include "local_planner/costmap_handler.hpp"
-
-using local_planner::LinearModelSequence;
-using local_planner::MPCResult;
-using local_planner::PathSample;
-using local_planner::MpcHorizon;
-using local_planner::VehicleGeom;
-using local_planner::ReferenceSequence;
-using local_planner::State;
-using local_planner::Control;
-using local_planner::MpcProblem;
-using local_planner::SolverOptions;
-using local_planner::ROI;
-using local_planner::GlobalSnapshotCostmap;
-using local_planner::CostmapParams;
-using local_planner::LateralCorridorSequence;
+#include "local_planner/math_utils.hpp"
 
 // ---------------------------------------------------------
 // Local Planner 노드
@@ -48,39 +34,38 @@ public:
         hor_.N  = 20;
         hor_.dt = 0.1;
 
-        prob_.hor        = hor_;
+        prob_.hor = hor_;
         prob_.model.mode = local_planner::ModelMode::Kinematic;
         prob_.model.geom = geom_;
 
         // 코스트맵 튜닝 파라미터
-        costmap_params_.scan_max         = 4.0;
-        costmap_params_.scan_step        = 0.05;
-        costmap_params_.inflation_y      = 0.20;
-        costmap_params_.occ_thres        = 50;
-        costmap_params_.unknown_as_occ   = true;
+        costmap_params_.scan_max = 4.0;
+        costmap_params_.scan_step = 0.05;
+        costmap_params_.inflation_y = 0.20;
+        costmap_params_.occ_thres = 50;
+        costmap_params_.unknown_as_occ = true;
         costmap_params_.out_of_map_block = true;
 
-        // 구독자/퍼블리셔 설정
+        // Publisher
+        cmd_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
+        ref_pub_ = this->create_publisher<nav_msgs::msg::Path>("/local_ref_path", 10);
+        pred_pub_ = this->create_publisher<nav_msgs::msg::Path>("/mpc_pred_path", 10);
+
+        // Subscription
         path_sub_ = this->create_subscription<nav_msgs::msg::Path>(
-            "/global_path", 1,
-            std::bind(&LocalPlannerNode::pathCallback, this, _1));
-
+            "/global_path", 1, [this](const nav_msgs::msg::Path::SharedPtr msg) {
+                pathCallback(msg);
+            });
         map_sub_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
-            "/map", 1,
-            std::bind(&LocalPlannerNode::mapCallback, this, _1));
-
+            "/map", 10, [this](const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
+                mapCallback(msg);
+            });
         odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
-            "/vins_estimator/odometry", 20,
-            std::bind(&LocalPlannerNode::odomCallback, this, _1));
+            "/vins_estimator/odometry", 20, [this](const nav_msgs::msg::Odometry::SharedPtr msg) {
+                odomCallback(msg);
+            });
 
-        cmd_pub_ = this->create_publisher<geometry_msgs::msg::Twist>(
-            "/cmd_vel", 10);
-
-        ref_pub_ = this->create_publisher<nav_msgs::msg::Path>(
-            "/local_ref_path", 10);
-        pred_pub_ = this->create_publisher<nav_msgs::msg::Path>(
-            "/mpc_pred_path", 10);
-
+        // Timer
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(50),   // 20 Hz
             std::bind(&LocalPlannerNode::onTimer, this));
@@ -89,11 +74,7 @@ public:
     }
 
 private:
-    // --------------------
-    // 콜백들
-    // --------------------
-    void pathCallback(const nav_msgs::msg::Path::SharedPtr msg)
-    {
+    void pathCallback(const nav_msgs::msg::Path::SharedPtr msg) {
         std::lock_guard<std::mutex> lock(mutex_);
         global_path_samples_.clear();
 
@@ -110,7 +91,7 @@ private:
         for (std::size_t i = 0; i < poses.size(); ++i) {
             const auto &p = poses[i].pose;
 
-            PathSample ps;
+            local_planner::PathSample ps;
             ps.x   = p.position.x;
             ps.y   = p.position.y;
 
@@ -130,35 +111,31 @@ private:
         last_s_on_path_ = 0.0;
         have_path_ = true;
 
-        RCLCPP_INFO(this->get_logger(),
-                    "Updated global path: %zu points, length ~ %.2f m",
-                    global_path_samples_.size(), accum_s);
+        RCLCPP_INFO(this->get_logger(), "Updated global path: %zu points, length ~ %.2f m", global_path_samples_.size(), accum_s);
     }
 
-    void mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
-    {
+    void mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
         std::lock_guard<std::mutex> lock(mutex_);
 
         const auto &info = msg->info;
-        const int width  = static_cast<int>(info.width);
+        const int width = static_cast<int>(info.width);
         const int height = static_cast<int>(info.height);
         const double res = info.resolution;
-        const double ox  = info.origin.position.x;
-        const double oy  = info.origin.position.y;
+        const double ox = info.origin.position.x;
+        const double oy = info.origin.position.y;
 
         // GlobalSnapshotCostmap 스냅샷으로 저장
-        global_costmap_.width      = width;
-        global_costmap_.height     = height;
-        global_costmap_.resolution = res;
-        global_costmap_.origin_x   = ox;
-        global_costmap_.origin_y   = oy;
-        global_costmap_.data       = msg->data;  // int8_t 복사
+        global_snapshot_costmap_.width = width;
+        global_snapshot_costmap_.height = height;
+        global_snapshot_costmap_.resolution = res;
+        global_snapshot_costmap_.origin_x = ox;
+        global_snapshot_costmap_.origin_y = oy;
+        global_snapshot_costmap_.data = msg->data;  // int8_t 복사
 
         have_map_ = true;
     }
 
-    void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
-    {
+    void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
         std::lock_guard<std::mutex> lock(mutex_);
 
         odom_x_ = msg->pose.pose.position.x;
@@ -174,23 +151,20 @@ private:
         have_odom_ = true;
     }
 
-    // --------------------
     // 타이머 콜백 (MPC 한 주기 실행)
-    // --------------------
-    void onTimer()
-    {
-        std::vector<PathSample> path;
+    void onTimer() {
+        std::vector<local_planner::PathSample> path;
         double x, y, yaw, vx, wz;
         bool have_path, have_map, have_odom;
 
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            path      = global_path_samples_;
-            x         = odom_x_;
-            y         = odom_y_;
-            yaw       = odom_yaw_;
-            vx        = odom_vx_;
-            wz        = odom_wz_;
+            path = global_path_samples_;
+            x = odom_x_;
+            y = odom_y_;
+            yaw = odom_yaw_;
+            vx = odom_vx_;
+            wz = odom_wz_;
             have_path = have_path_;
             have_map  = have_map_;
             have_odom = have_odom_;
@@ -203,22 +177,19 @@ private:
             return;
         }
 
-        MpcProblem prob_local = prob_;  // 템플릿에서 복사 후 수정
+        local_planner::MpcProblem prob_local = prob_;  // 템플릿에서 복사 후 수정
         std::vector<double> x_ref, y_ref;
-        State x_curr{};
+        local_planner::State x_curr{};
 
-        if (!buildProblemFromCurrentState(path, x, y, yaw, vx, wz,
-                                          prob_local, x_ref, y_ref, x_curr)) {
+        if (!buildProblemFromCurrentState(path, x, y, yaw, vx, wz, prob_local, x_ref, y_ref, x_curr)) {
             return;
         }
 
         // MPC 풀이
-        MPCResult res = local_planner::solve_local_mpc(
-            prob_local, x_curr, &last_u_seq_, solver_opt_);
+        local_planner::MPCResult res = local_planner::solve_local_mpc(prob_local, x_curr, &last_u_seq_, solver_opt_);
 
         if (!res.success) {
-            RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000,
-                                 "MPC solver failed.");
+            RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000, "MPC solver failed.");
             return;
         }
 
@@ -227,7 +198,7 @@ private:
 
         // 제어 명령 출력
         if (!res.u_pred.empty()) {
-            const Control &u0 = res.u_pred.front();
+            const local_planner::Control &u0 = res.u_pred.front();
             publishCmd(u0, vx);
         }
 
@@ -235,23 +206,21 @@ private:
         publishDebugPaths(prob_local.ref, res, x_ref, y_ref);
     }
 
-    // ---------------------------------------------------
     // MPC 문제 생성: Reference + Corridor + LTV 모델 구성
-    // ---------------------------------------------------
-    bool buildProblemFromCurrentState(const std::vector<PathSample> &path,
+    bool buildProblemFromCurrentState(const std::vector<local_planner::PathSample> &path,
                                       double rx, double ry, double ryaw,
                                       double rvx, double rwz,
-                                      MpcProblem &prob_out,
+                                      local_planner::MpcProblem &prob_out,
                                       std::vector<double> &x_ref,
                                       std::vector<double> &y_ref,
-                                      State &x_curr)
-    {
+                                      local_planner::State &x_curr) {
         const std::size_t N = hor_.N;
+        // 지평길이, 경로길이 체크
         if (path.size() < 2 || N == 0) {
             return false;
         }
 
-        // 1) 현재 위치에서 가장 가까운 경로 인덱스 찾기
+        // 현재 위치에서 가장 가까운 경로 인덱스 찾기
         std::size_t nearest_idx = 0;
         double best_d2 = std::numeric_limits<double>::infinity();
         for (std::size_t i = 0; i < path.size(); ++i) {
@@ -271,10 +240,9 @@ private:
         }
         last_s_on_path_ = s0;
 
-        // 2) ReferenceSequence 생성 (yaw, curvature, 속도 레퍼런스)
+        // ReferenceSequence 생성 (yaw, curvature, 속도 레퍼런스)
         double vx_ref_default = std::max(0.5, std::abs(rvx));
-        ReferenceSequence ref =
-            local_planner::traj::buildReferenceSequenceTimeParam(path, hor_, s0, vx_ref_default);
+        local_planner::ReferenceSequence ref = local_planner::traj::buildReferenceSequenceTimeParam(path, hor_, s0, vx_ref_default);
 
         if (ref.s_ref.size() < N) {
             RCLCPP_WARN(this->get_logger(),
@@ -282,19 +250,18 @@ private:
             return false;
         }
 
-        // 3) ref.s_ref 에 맞춰 x_ref / y_ref 보간
+        // buildReferenceSequenceTimeParam 결과
+        // ref.s_ref 에 맞춰 x_ref / y_ref 보간
         x_ref.resize(N);
         y_ref.resize(N);
-        for (std::size_t k = 0; k < N; ++k) {
+        for (std::size_t k = 0; k < N; k++) {
             double sk = ref.s_ref[k];
 
             // 경로 상에서 sk에 가장 가까운 segment 찾기
             std::size_t i = 0;
-            while (i + 1 < path.size() && path[i + 1].s < sk) {
-                ++i;
-            }
-            const PathSample &p0 = path[i];
-            const PathSample &p1 = (i + 1 < path.size()) ? path[i + 1] : path.back();
+            while (i + 1 < path.size() && path[i + 1].s < sk) i++;
+            const local_planner::PathSample &p0 = path[i];
+            const local_planner::PathSample &p1 = (i + 1 < path.size()) ? path[i + 1] : path.back();
 
             double s0_seg = p0.s;
             double s1_seg = p1.s;
@@ -310,30 +277,28 @@ private:
             y_ref[k] = p0.y + (p1.y - p0.y) * t;
         }
 
-        // 4) ROI 설정 (로봇 주변 일부 영역만 corridor 계산)
-        ROI roi;
+        // ROI 설정 (로봇 주변 일부 영역만 corridor 계산)
+        local_planner::ROI roi;
         roi.cx = rx;
         roi.cy = ry;
         roi.width  = 20.0;
         roi.height = 20.0;
 
-        // 5) 코리도 생성 (occupancy grid 스냅샷 기반)
-        LateralCorridorSequence corridor =
-            local_planner::buildCorridorFromCostmap(
-                global_costmap_, roi, ref, x_ref, y_ref, geom_, costmap_params_);
+        // 코리도 생성 (occupancy grid 스냅샷 기반)
+        local_planner::LateralCorridorSequence corridor = local_planner::buildCorridorFromCostmap(global_snapshot_costmap_, roi, ref, x_ref, y_ref, geom_, costmap_params_);
 
-        // 6) LTV 모델 구성 (키네마틱 에러 모델 선형화)
-        LinearModelSequence ltv = buildLtv(ref);
+        // LTV 모델 구성 (키네마틱 에러 모델 선형화)
+        local_planner::LinearModelSequence ltv = buildLtv(ref);
 
-        // 7) MpcProblem 세팅
-        prob_out.hor        = hor_;
+        // MpcProblem 세팅
+        prob_out.hor = hor_;
         prob_out.model.geom = geom_;
-        prob_out.ref        = ref;
-        prob_out.corridor   = corridor;
-        prob_out.ltv        = ltv;
+        prob_out.ref = ref;
+        prob_out.corridor = corridor;
+        prob_out.ltv = ltv;
         // friction_poly / safety / slack / weights / limits 는 기존값 사용
 
-        // 8) 현재 상태를 에러 좌표계로 변환
+        // 현재 상태를 에러 좌표계로 변환
         const double yaw_ref0 = ref.yaw_ref[0];
         const double x_c0 = x_ref[0];
         const double y_c0 = y_ref[0];
@@ -345,25 +310,26 @@ private:
         const double dy0 = ry - y_c0;
 
         const double ey   = dx0 * nx + dy0 * ny;
-        const double epsi = radNormalize(ryaw - yaw_ref0);
+        // const double epsi = radNormalize(ryaw - yaw_ref0);
+        const double epsi = local_planner::math::wrapToPi(ryaw - yaw_ref0);
 
-        x_curr.ey   = ey;
+
+        x_curr.ey = ey;
         x_curr.epsi = epsi;
-        x_curr.s    = 0.0;      // 현재 시점에서 s-error는 0
-        x_curr.vx   = rvx;
-        x_curr.wz   = rwz;
+        x_curr.s = 0.0;      // 현재 시점에서 s-error는 0
+        x_curr.vx = rvx;
+        x_curr.wz = rwz;
 
         return true;
     }
 
     // Continuous-time error 모델을 간단히 선형화 한 LTV 생성
-    LinearModelSequence buildLtv(const ReferenceSequence &ref) const
-    {
+    local_planner::LinearModelSequence buildLtv(const local_planner::ReferenceSequence &ref) const {
         const std::size_t N  = hor_.N;
         const std::size_t nx = 5; // [ey, epsi, s, vx, wz]
         const std::size_t nu = 2; // [ax, delta]
 
-        LinearModelSequence seq;
+        local_planner::LinearModelSequence seq;
         seq.nx = nx;
         seq.nu = nu;
         seq.models.resize(N);
@@ -371,8 +337,8 @@ private:
         const double dt = hor_.dt;
         const double L  = geom_.wheelbase;
 
-        for (std::size_t k = 0; k < N; ++k) {
-            double v_ref = (k < ref.vx_ref.size())    ? ref.vx_ref[k]    : ref.vx_ref.back();
+        for (std::size_t k = 0; k < N; k++) {
+            double v_ref = (k < ref.vx_ref.size()) ? ref.vx_ref[k] : ref.vx_ref.back();
             double kappa = (k < ref.kappa_ref.size()) ? ref.kappa_ref[k] : ref.kappa_ref.back();
 
             if (v_ref < 0.1) v_ref = 0.1;
@@ -413,8 +379,7 @@ private:
     }
 
     // 제어 명령 publish (ax, delta -> v, yaw_rate)
-    void publishCmd(const Control &u0, double vx_curr)
-    {
+    void publishCmd(const local_planner::Control &u0, double vx_curr) {
         const double dt = hor_.dt;
         const double L  = geom_.wheelbase;
 
@@ -433,22 +398,45 @@ private:
         cmd.angular.z = yaw_rate_cmd;
 
         cmd_pub_->publish(cmd);
+        
+        /* AckermannDrive 메시지 */
+        /*
+        // u0.ax    -> 원하는 속도 변화
+        // u0.delta -> 조향각
+        const double dt = hor_.dt;
+        
+        // 속도계산
+        double v_cmd = vx_curr + u0.ax * dt;
+        if (v_cmd < 0.0) v_cmd = 0.0;
+
+        // 조향각
+        double steering_angle = u0.delta;
+
+        // 메시지 생성
+        ackermann_msgs::msg::AckermannDriveStamped msg;
+        msg.header.stamp = this->now();
+
+        msg.drive.speed = v_cmd;                    // 선속도
+        msg.drive.steering_angle = steering_angle;  // 조향각
+
+        msg.drive.acceleration = u0.ax;
+        msg.drive.steering_angle_velocity = 0.0; // 필요 없으면 0
+        msg.drive.jerk = 0.0;
+
+        ackermann_pub_->publish(msg);
+        */
     }
 
     // 디버그용 레퍼런스/예측 경로 publish
-    void publishDebugPaths(const ReferenceSequence &ref,
-                           const MPCResult &res,
-                           const std::vector<double> &x_ref,
-                           const std::vector<double> &y_ref)
-    {
+    void publishDebugPaths(const local_planner::ReferenceSequence &ref, const local_planner::MPCResult &res, const std::vector<double> &x_ref, const std::vector<double> &y_ref) {
         const std::size_t N = hor_.N;
 
         // Reference path (center line)
         nav_msgs::msg::Path ref_path;
         ref_path.header.frame_id = "map";
-        ref_path.header.stamp    = this->now();
+        ref_path.header.stamp = this->now();
 
-        for (std::size_t k = 0; k < N; ++k) {
+        for (std::size_t k = 0; k < N; k++) {
             if (k >= x_ref.size() || k >= y_ref.size()) {
                 break;
             }
@@ -478,7 +466,7 @@ private:
         pred_path.header = ref_path.header;
 
         for (std::size_t k = 0; k < N; ++k) {
-            const State &xk = res.x_pred[k];
+            const local_planner::State &xk = res.x_pred[k];
             double ey   = xk.ey;
             double yawc = (k < ref.yaw_ref.size()) ? ref.yaw_ref[k] : ref.yaw_ref.back();
 
@@ -511,27 +499,22 @@ private:
         pred_pub_->publish(pred_path);
     }
 
-    static double radNormalize(double a)
-    {
-        return std::atan2(std::sin(a), std::cos(a));
-    }
-
 private:
     // MPC 관련 기본 파라미터
-    MpcHorizon hor_;
-    VehicleGeom geom_;
-    MpcProblem prob_;
-    SolverOptions solver_opt_;
+    local_planner::MpcHorizon hor_;
+    local_planner::VehicleGeom geom_;
+    local_planner::MpcProblem prob_;
+    local_planner::SolverOptions solver_opt_;
 
     // Costmap 설정
-    GlobalSnapshotCostmap global_costmap_;
-    CostmapParams        costmap_params_;
+    local_planner::GlobalSnapshotCostmap global_snapshot_costmap_;
+    local_planner::CostmapParams costmap_params_;
 
     // 마지막 MPC 해 (warm start 용)
-    std::vector<Control> last_u_seq_;
+    std::vector<local_planner::Control> last_u_seq_;
 
     // 전역 경로 (PathSample)
-    std::vector<PathSample> global_path_samples_;
+    std::vector<local_planner::PathSample> global_path_samples_;
     double last_s_on_path_ = 0.0;
 
     // 최신 odom
@@ -546,22 +529,26 @@ private:
     bool have_map_ = false;
     bool have_odom_ = false;
 
-    // ROS 인터페이스
-    rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_sub_;
-    rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr map_sub_;
-    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
+    // Publisher
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_pub_;
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr ref_pub_;
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pred_pub_;
+
+    // Subscription
+    rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_sub_;
+    rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr map_sub_;
+    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
+    
+    // Timer
     rclcpp::TimerBase::SharedPtr timer_;
 
     std::mutex mutex_;
 };
 
-// ---------------------------------------------------------
 int main(int argc, char **argv) {
     rclcpp::init(argc, argv);
     rclcpp::spin(std::make_shared<LocalPlannerNode>());
     rclcpp::shutdown();
+
     return 0;
 }
