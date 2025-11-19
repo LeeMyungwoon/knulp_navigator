@@ -1,10 +1,20 @@
-#include "global_planner.hpp"
+// global_planner.cpp
+
+#include "global_planner/global_planner.hpp"
+
+double rad_normalize(double a) {
+    return std::atan2(std::sin(a), std::cos(a)); // [-pi,pi]
+}
+
+double deg2rad(double d) { 
+    return d * M_PI / 180.0;    
+}
 
 bool GridMap::inBounds(int gx, int gy) const {
     return (gx >= 0 && gx < width && gy >= 0 && gy < height);
 }
 
-bool GridMap::worldToGrid(double xw, double yw, int& gx, int& gy) const {
+bool GridMap::worldToGrid(double xw, double yw, int &gx, int &gy) const {
     gx = static_cast<int>(std::floor((xw - origin_x) / resolution));
     gy = static_cast<int>(std::floor((yw - origin_y) / resolution));
 
@@ -47,11 +57,11 @@ bool GridMap::isSegmentFree(int gx0, int gy0, int gx1, int gy1) const {
     return true;
 }
 
-HybridAStarRoutePlanner::PathXYZT HybridAStarRoutePlanner::search_route(const Pose& start_w, const Pose& goal_w) {
+PathXYZT HybridAStarRoutePlanner::search_route(const Pose &start_w, const Pose &goal_w) {
     // start/goal grid
     int sgx, sgy, ggx, ggy;
-    if (!map_.worldToGrid(start_w.x, start_w.y, sgx, sgy)) return {{}, {}};
-    if (!map_.worldToGrid(goal_w.x,  goal_w.y,  ggx, ggy)) return {{}, {}};
+    if (!map_.worldToGrid(start_w.x, start_w.y, sgx, sgy)) return PathXYZT{{}, {}, {}};
+    if (!map_.worldToGrid(goal_w.x,  goal_w.y,  ggx, ggy)) return PathXYZT{{}, {}, {}};
 
     goal_pose_ = goal_w;
 
@@ -109,14 +119,14 @@ HybridAStarRoutePlanner::PathXYZT HybridAStarRoutePlanner::search_route(const Po
         }
     }
 
-    return {{}, {}};
+    return PathXYZT{{}, {}, {}};
 }
 
 int HybridAStarRoutePlanner::id(int gx, int gy) const { 
     return gy * map_.width + gx; 
 }
 
-bool HybridAStarRoutePlanner::next_node(const Node &cur, int cur_id, double chord, double steer, Node &nxt) const {
+bool HybridAStarRoutePlanner::next_node(const Node &cur, int /*cur_id*/, double chord, double steer, Node &nxt) const {
     // bicycle model
     double theta = rad_normalize(cur.pose.theta + chord * std::tan(steer) / wheelbase_);
     double x = cur.pose.x + chord * std::cos(theta);
@@ -141,7 +151,7 @@ double HybridAStarRoutePlanner::heuristic(const Node& n) const {
 }
 
 // 유클리드거리
-double HybridAStarRoutePlanner::distance_to_goal(const Pose& p) const {
+double HybridAStarRoutePlanner::distance_to_goal(const Pose &p) const {
     double dx = p.x - goal_pose_.x;
     double dy = p.y - goal_pose_.y;
     
@@ -149,7 +159,7 @@ double HybridAStarRoutePlanner::distance_to_goal(const Pose& p) const {
     // return std::sqrt(dx*dx + dy*dy);
 }
 
-HybridAStarRoutePlanner::PathXYZT HybridAStarRoutePlanner::reconstruct(const std::unordered_map<int,int> &parent, const std::unordered_map<int,Node> &best_node, int goal_id) const {
+PathXYZT HybridAStarRoutePlanner::reconstruct(const std::unordered_map<int,int> &parent, const std::unordered_map<int,Node> &best_node, int goal_id) const {
     PathXYZT path;
     int cur = goal_id;
     while (cur != -1) {

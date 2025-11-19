@@ -1,3 +1,5 @@
+// global_planner_node.cpp
+
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
@@ -9,7 +11,7 @@
 #include <tf2/utils.h>    
 #include <tf2/LinearMath/Quaternion.h> 
 
-#include "global_planner.hpp"
+#include "global_planner/global_planner.hpp"
 
 class globalPlanner : public rclcpp::Node {
 public:
