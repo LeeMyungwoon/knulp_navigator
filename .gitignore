@@ -1,6 +1,16 @@
+# ROS2
+build/
+install/
+log/
+
+# CMake
 /build/
-/install/
-/log/
+/CMakeFiles/
+/Makefile
+/CMakeCache.txt
+/*.cmake
+
+# etc
 frames_*.gv
 frames_*.pdf
 
