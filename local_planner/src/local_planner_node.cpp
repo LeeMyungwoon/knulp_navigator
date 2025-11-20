@@ -1,3 +1,5 @@
+// local_planner_node.cpp
+
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -22,9 +24,6 @@
 #include "local_planner/costmap_handler.hpp"
 #include "local_planner/math_utils.hpp"
 
-// ---------------------------------------------------------
-// Local Planner 노드
-// ---------------------------------------------------------
 class LocalPlannerNode : public rclcpp::Node {
 public:
     LocalPlannerNode() : Node("local_planner") {

@@ -1,3 +1,5 @@
+// map_builder_node.cpp
+
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
