@@ -126,7 +126,7 @@ Euroc dataset을 활용하여 테스트
 <br />
 Euroc dataset을 활용하여 테스트 되었습니다. 
 <br />
-드론 dataset이라 높이기반 장애물을 필터링을 하지 못했습니다.
+드론 dataset이라 높이기반 장애물 필터링을 하지 못했습니다.
 <br />
 추후 차량 dataset으로 대체 될 예정입니다.
 
